@@ -318,3 +318,4 @@ TSWLatexianTemp*
 *.json
 *.pdf
 Data/Models/*
+venv_*/*
