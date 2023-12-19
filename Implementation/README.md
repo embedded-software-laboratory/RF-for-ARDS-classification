@@ -3,31 +3,31 @@ This folder contains my implementation.
 # Folder structure
 
 * Extraction contains the different Extractors used for the different databases as well as generator code used to create several dictionaries. IExtractor contains functions used by all extractors
-* Lookup contains said dictionaries as well es other files which store futher information needed for the execution of my implementation
+* Lookup contains said dictionaries as well es other files which store further information needed for the execution of my implementation
 * Learning contains all files where a RF is used in some way as well as part of the evaluation code
-* Filtering contains code that is used to filter the data during different steps of the programm execution. Filters specific to database are mostly found in their respective filter file. IFilter contains general filters.
+* Filtering contains code that is used to filter the data during different steps of the program execution. Filters specific to database are mostly found in their respective filter file. IFilter contains general filters.
 * Preprocessing contains the code that transformed the extracted data to feature vectors. Each database has their own Preprocessor with functions specific to their structure, common functions are found in IPreprocessor.
 * ssh contains code to establish an SSH connection to the database server.
 * Other scripts contain a multitude of scripts used sometime during my thesis
-* eICU.parquet, uka.parquet and MIMICIV.parquet should contain the data after preprocessing
-* main.py is the main file used for execution, other .py files are similar to the ones in otherscripts but need to stay at their current location in order to work
+* eICU.parquet, uka.parquet and MIMIC-IV.parquet should contain the data after preprocessing
+* main.py is the main file used for execution, other .py files are similar to the ones in other scripts but need to stay at their current location in order to work
 
 # Usage of options.json
 WARNING use linux style paths for each path provided in the options.json.
 
 ## Execution
-Contains setttings for the execution flow of the programm+
+Contains settings for the execution flow of the program
 
-* active_phases notes which phases of the programm are executed. 1 denotes that the respective phase should be executed
-* datasets denotes which data is relevant for the filters during a run of the programm and to be used in learning, crossvalidation and evalution. All relevant databses should be marked by 1
-* locations store where the current (processed) data will be stored. This file will be otherwritten multiple times during programm execution
+* active_phases notes which phases of the program are executed. 1 denotes that the respective phase should be executed
+* datasets denotes which data is relevant for the filters during a run of the program and to be used in learning, cross-validation and evaluation. All relevant databases should be marked by 1
+* locations store where the current (processed) data will be stored. This file will be overwritten multiple times during program execution
 
 ## Extraction
 Contains settings for the extraction phase with regard to the databases
 
-* used_databases marks wether data should be extracted from the respective databases (1: yes, 0: no).
+* used_databases marks whether data should be extracted from the respective databases (1: yes, 0: no).
 * locations store the location where the extracted data will be stored as a .csv and .parquet file.
-* parameters contains mutiple settings for the extraction itself:
+* parameters contains multiple settings for the extraction itself:
     * admission_count_database : How many admissions will be extracted from the database
     * page_size: How many admissions will be extracted in each job
 
@@ -36,7 +36,7 @@ Contains settings needed to establish a connection to the database and ssh serve
 
 * user : database username
 * password: database password
-* ssh : Contains information on the ssh connection as well as forwording
+* ssh : Contains information on the ssh connection as well as forwarding
     * host: ip-address of the ssh-server
     * username: ssh-username
     * password: ssh-password
@@ -60,14 +60,14 @@ Contains parameters used during the filtering
 * parameters: 
     * filter_ARDS_high_Horowitz: if 1 admissions with ARDS with a lowest horovitz-index > 300 are filtered out
     * filter_no_ARDS_low_Horowitz: if 1 admissions without ARDS with a lowest horovitz-index < 200 are filtered out
-    * filter_no_ARDS_low_Horowitz_contraindication_present: if 1 admissions without ARDS with a lowest horovitz-index < 200 while not having a contra indication diagnosis (lung edema, heartfailure, etc.) are filtered out
-    * filter_percentage_of_features: admissions need atleast this percentage value of all features present. Use decimal notation
+    * filter_no_ARDS_low_Horowitz_contraindication_present: if 1 admissions without ARDS with a lowest horovitz-index < 200 while not having a contra indication diagnosis (lung edema, heart failure, etc.) are filtered out
+    * filter_percentage_of_features: admissions need at least this percentage value of all features present. Use decimal notation
     * filter_features_present: If 1 ensure at least filter_percentage_of_features are present for the admission, else it gets filtered out
 * locations: path to the different locations were the filtered data is stored in .csv and .parquet files
 
 ## feature_selection
 * params:
-    * type: How to Select the best Features, either percentage based (SelectPercentile) or absolute (SelectKBest) incase of algorithm mutual_info_classif or RandomForest incase of algorithm Tree
+    * type: How to Select the best Features, either percentage based (SelectPercentile) or absolute (SelectKBest) incase of algorithm mutual_info_classif or RandomForest in case of algorithm Tree
     * algorithms: Name of algorithm used for feature selection Possible options Tree or mutual_info_classif
     * generate_new_sets: Make a new split of the extracted data (1: yes, 0: no)
 * algorithm_params : Parameters for feature selection
@@ -81,12 +81,12 @@ Contains parameters for learning and evaluation
 * parameters :
     * general : 
         * model_name : Name of your model, will be used when storing or loading RF models
-        * training_uka_database: Wether or not data from this database will be used during training
+        * training_uka_database: Whether or not data from this database will be used during training
         * ratio_ards_no_ards: Desired percentage of ARDS admissions in both Test and validation set. Will be achieved by lowering admissions used for training
         * ratio_test_training: Percentage of admissions reserved for the validation set
         * generate_new_sets: Make a new split of the extracted data (1: yes, 0: no) only set to one if generate_new_sets in feature selection is set to 0
     * sk-learn: 
-    * random_forest: parameters to configure the RF explaination found [here](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html). All config files for RF must have this structure
+    * random_forest: parameters to configure the RF explanation found [here](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html). All config files for RF must have this structure
     * cross_validation : explained [here](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html#sklearn.model_selection.StratifiedKFold) RandomState is hardcoded.
 
 * locations:
