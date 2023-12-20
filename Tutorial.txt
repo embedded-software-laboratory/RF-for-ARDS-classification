@@ -1,0 +1,56 @@
+Pipeline Normal:
+
+Wenn aktiv: Extraktion der Daten aus den angegebenen Datenbanken
+Wenn aktiv: Filtern der Daten mit den angegebenen Filtern, schreibt Daten in location die in options.json angegeben ist und überschreibt aktuellen Stand (im Wurzelverzeichnis der Implementierung)
+Wenn aktiv: Führe Feature Selection aus:
+	Wenn Daten neu gesplittet werden sollen:
+		Lese aktuellen Stand der Daten aus Implementation/.
+		Fülle leere Felder mit -100.000
+		Bestimme Anzahl der ARDS und nicht ARDS Patienten, die für das gewünschte Verhältnis benötigt werden
+		Wähle random Patienten aus, sodass das gewünschte Verhältnis erreicht wird
+		Bestimme Anzahl der Patienten mit und ohne ARDS in Test und Trainingset
+		Erstelle Trainings- und Testssets
+		Schreibe Trainingsset nach Location die in options.json angegeben ist und ../Data/Training_Data/dump_feature_selection
+		Schreibe Testset an die angegebene Location in options.json
+	Lese Daten aus ../Data/Training_Data/dump_feature_selection
+	Führe Feature Selection aus, Algorithmus wird in options.json festgelegt.
+	Schreibe Trainingsdatenset mit durch Feature Selection eingeschränkten Feature Space in ../Data/Training_Data/
+Wenn aktiv: Cross-Validation durchführen
+	Lese Trainingsdatensatz aus ../Data/Training_Data/training_set.parquet
+	Lade RF-Hyperparameter aus ../Data/Validation/Settings/<Name>.json
+	Führe Cross-Validation durch
+	Schreibe durchnschnittliche Performancewerte nach ../Data/Validation/Metrics/<Name>.json
+	Trainierte Modelle werden nicht gespeichert, da es sich um k unterschiedliche Modelle handelt
+
+Wenn Learning aktiviert ist:
+	Initialisiere RF mit Hyperparametern aus options.json
+	Lade Trainingsdaten aus ../Data/Training_Data/training_set.parquet
+	Trainiere RF auf allen Daten
+	Speicher resultierendes Modell in ../Data/Models/<Name>
+
+Wenn Evaluation aktiviert ist:
+	Lade RF-Modell aus ../Data/Models/<Name>
+	Lade Test-Datensatz aus ../Data/Test_Data/test_set.parquet
+	Führe Klassifizierung durch und speichere Performance unter ../Data/Results/<Name>.json
+
+
+Pipeline um alle Modelle aus meiner BA zu erzeugen:
+
+Wird mit Hilfe von ./06_Implementierung/Implementation/train_models.py gemacht.
+
+Vorraussetung für das Funktionieren des Skriptes ist, dass die Daten aus den Datenbanken bereits heruntergeladen, gefiltert und gesplittet wurden. Die Trainingsdaten müssen in ./06_Implementierung/Data/Training_Data liegen und dem Namenschema "<Datenbank>_data_<Filtertyp>.parquet" folgen. Die möglichen Werte für <Datenbank> werden in der Liste 'databases', die Werte für <Filter> in der Liste filters angegeben. Darüber hinaus muss unter ./06_Implementierung/Data/Models/Save/ eine Konfigurationsdatei für den Randomforerst vorhanden sein. Diese muss dem folgenden Namensschema und Aufbau folgen: "<Datenbank>_data_<Filtertyp>.json"
+
+{
+	"n_estimators": 500, 
+	"min_samples_split": 10, 
+	"min_samples_leaf": 2, 
+	"max_features": "sqrt", 
+	"max_depth": 361, 
+	"bootstrap": false
+}
+
+wobei die Werte frei gewählt werden können (für möglichst genaue Replikation (bis auf vergessen nicht geseedete Randomisierung) die Werte gleich lassen). 
+
+Danach werden alle Modelle die aus der Kombination der Listen databases, filters und feature_selections erstellt werden können, trainiert und mit Hilfe von 5-fold cross-validation evaluiert. Die von der Feature Selection ausgewählten Feature werden dabei in ./06_Implementierung/Data/Validation/Settings/ gespeichert und folgen dem Namensschema "<Datenbank>_data_<Filtertyp>_<Feature Selection Typ>_<Revision>.csv". Die Evaluationsergebnisse finden sich unter ./06_Implementierung/Data/Validation/Metrics/ und folgen dem Namenschema "<Datenbank>_data_<Filtertyp>_<Feature Selection Typ>_<Revision>.json". Die Revision kann vom Nutzer gesetzt werden und dient dazu unterschiedliche Läufe zu unterscheiden (z.B. ausprobieren unterschiedlicher Hyperparameter).
+
+Die Einstellungen für die Hyperparameter die für das Training der Modelle verwendet wurden, wurden mit Hilfe der Funktion tune_hyperparameters in sk_Learner.py gefunden. Hier wurde eine Random Gridsearch für die besten Hyperparameter durch geführt. Das beste Modell wurde durch den höchsten MCC bestimmt.
