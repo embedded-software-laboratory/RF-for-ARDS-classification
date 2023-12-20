@@ -1,0 +1,164 @@
+{
+    "execution" : {
+      "active_phases" : {
+        "extraction" : 0,
+        "filtering" : 0,
+        "feature_selection" : 0,
+        "cross_validation" : 0,
+        "learning" : 0,
+        "evaluation" : 1
+      },
+      "datasets": {
+        "uka" : 0,
+        "MIMICIV" : 0,
+        "eICU" : 1
+      },
+      "locations" : {
+        "uka" : "./uka.parquet",
+        "MIMICIV" : "./MIMICIV.parquet",
+        "eICU" : "./eICU.parquet"
+      }
+    },
+    "extraction" : {
+      "used_databases" : {
+        "uka" : 0,
+        "MIMICIV" : 0,
+        "eICU" : 1
+      },
+      "locations" : {
+        "uka_pq" : "./uka_data.parquet",
+        "uka_csv" : "./uka_data.csv",
+        "MIMICIV_pq" : "./MIMICIV_data.parquet",
+        "MIMICIV_csv" : "./MIMICIV_data.csv",
+        "eICU_pq" : "./eICU_data.parquet",
+        "eICU_csv" : "./eICU_data.csv"
+      },
+      "parameters" : {
+        "admission_count_uka" : 3,
+        "admission_count_MIMICIV" : 1,
+        "admission_count_eICU" : 400,
+        "page_size" : 400
+      }
+    },
+    "database_connection": {
+      "user": "db_user",
+      "password": "db_password",
+      "ssh": {
+        "host": "ssh_host",
+        "username": "ssh_user",
+        "password": "ssh_password",
+        "forward_host": "db_host",
+        "forward_port": 3306
+      }
+    },
+    "extraction_parameter": {
+      "windowsize_before": 7,
+      "windowsize_after": 3,
+      "windowsize_horowitz": 3,
+      "cutoff_time_horowitz": 240,
+      "cutoff_time_fiO2_paO2": 60,
+      "cutoff_time_lymphs_leukos": 240,
+      "feature_parameter": {
+         "feature_cutoff": [24.0, 12.0, 8.0, 2.0, 1.0, 0.5, 0.2]
+      }
+    },
+    "filtering" : {
+      "parameters": {
+        "filter_ARDS_high_Horowitz": 1,
+        "filter_no_ARDS_low_Horowitz": 1,
+        "filter_no_ARDS_low_Horowitz_contraindication_present": 0,
+        "filter_features_present" : 0,
+        "filter_percentage_of_features" : 0.5
+      },
+      "locations" : {
+        "uka_pq" : "../Data/Processed_Data/uka_data_filtered.parquet",
+        "uka_csv" : "../Data/Processed_Data/uka_data_filtered.csv",
+        "MIMICIV_pq" : "../Data/Processed_Data/MIMICIV_data_filtered.parquet",
+        "MIMICIV_csv" : "../Data/Processed_Data/MIMICIV_data_filtered.csv",
+        "eICU_pq" : "../Data/Processed_Data/eICU_data_filtered.parquet",
+        "eICU_csv" : "../Data/Processed_Data/eICU_data_filtered.csv"
+      }
+    },
+    "feature_selection" : {
+      "parameters" : {
+        "type" : "SelectPercentile",
+        "algorithms" : ["mutual_info_classif"],
+        "generate_new_sets" : 0
+      },
+      "algorithm_params" : {
+        "SelectKBest" : {
+            "k" : 500
+        },
+        "SelectPercentile" : {
+            "percentile" : 20
+        },
+        "Tree" : {
+            "Random_Forest_location": "../Data/Validation/Settings/uka_filtered_real_balance_1000_trees.json"
+        }
+        
+      }
+
+        
+    },
+    "learning": {
+      "parameters": {
+        "general" : {
+          "model_name" : "uka",
+          "training_uka" : 1,
+          "training_eICU" : 0,
+          "training_MIMICIV" : 0,
+          "ratio_ards_no_ards" : 0.1,
+          "ratio_test_training" : 0.1,
+          "generate_new_sets" : 0
+        },
+        "sk-learn" : {
+          "random_forest" : {
+            "n_estimators" : 700,
+            "criterion" : "gini",
+            "max_depth" : 200,
+            "min_samples_split" : 10,
+            "min_samples_leaf" : 1,
+            "min_weight_fraction_leaf" : 0.0,
+            "max_features" : "sqrt",
+            "max_leaf_nodes" : null,
+            "min_impurity_decrease" : 0.0,
+            "bootstrap" : true,
+            "oob_score" : false,
+            "n_jobs" : -1,
+            "verbose" : 0,
+            "warm_start" : false,
+            "class_weight" : null,
+            "ccp_alpha" : 0.0,
+            "max_samples" : null
+          },
+          "cross_validation" : {
+            "n_splits" : 5,
+            "shuffle" : false
+          }
+        }
+      },
+      "locations" : {
+        "test_set_location" : "../Data/Test_Data/test_set",
+        "training_set_location" : "../Data/Training_Data/training_set",
+        "training_set_location_csv" : "../Data/Training_Data/training_set.csv",
+        "validation_options_path" : "../Data/Validation/Settings/",
+        "validation_metrics_path" : "../Data/Validation/Metrics/" ,
+        "validation_options_name" : "uka_unfiltered_first_test.json"
+
+      },
+      "algorithm" : "sk"
+    },
+    "evaluation" : {
+      "parameters" : {
+        "model" : "",
+        "test_data" : ""
+      },
+      "locations" : {
+        "result" : ""
+      }
+        
+    }
+  }
+    
+    
+  
