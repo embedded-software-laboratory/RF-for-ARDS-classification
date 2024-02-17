@@ -1,5 +1,6 @@
 import json
 import math
+import sys
 from multiprocessing import Pool
 import os
 import logging
@@ -92,6 +93,25 @@ def process(options, page_size: int, offset: int, job_id: int) -> list:
         raise
     
     return result_tuple
+
+
+def determine_filtername(dataset_name, path):
+    active_filters = options_filtering["parameters"]
+    filter_name = ""
+    if active_filters["filter_ARDS_high_Horowitz"] == 1 and active_filters["filter_no_ARDS_low_Horowitz"] == 1:
+        filter_name = "extreme"
+    elif active_filters["filter_ARDS_high_Horowitz"] == 1 and \
+            active_filters["filter_no_ARDS_low_Horowitz_contraindication_present"] == 1:
+        filter_name = "light"
+    elif active_filters["filter_ARDS_high_Horowitz"] == 0 and active_filters["filter_no_ARDS_low_Horowitz"] == 0 and \
+            active_filters["filter_no_ARDS_low_Horowitz_contraindication_present"] == 0:
+        filter_name = "full"
+    else:
+        print("Something went wrong!")
+        sys.exit(1)
+    filtering_path_csv = path + "/" + dataset_name + "_data_" + filter_name + ".csv"
+    filtering_path_parquet = path + "/" + dataset_name + "_data_" + filter_name + ".parquet"
+    return filtering_path_csv, filtering_path_parquet
 
 
 def extraction(options, page_size, job_count, location_csv, location_pq, location_latest) -> None:
@@ -229,24 +249,25 @@ if __name__ == "__main__":
     # Check if filtering flag is set
     if active_phases["filtering"] == 1:
         # Create correct filter for the databases
+        path_to_filtered = options_filtering["locations"]["general"]
         if options_used_datasets["uka"] == 1:
             filter_data = ukaFilter(options)
-
+            location_filtered_csv, location_filtered_parquet = determine_filtername("uka", path_to_filtered)
             # Start filtering
-            filtering(filter_data, options_extraction["locations"]["uka_pq"], options_filtering["locations"]["uka_csv"],
-                      options_filtering["locations"]["uka_pq"], options_execution["locations"]["uka"])
+            filtering(filter_data, options_extraction["locations"]["uka_pq"], location_filtered_csv,
+                      location_filtered_parquet, options_execution["locations"]["uka"])
         if options_used_datasets["eICU"] == 1:
             filter_data = eICUFilter(options)
-
+            location_filtered_csv, location_filtered_parquet = determine_filtername("eICU", path_to_filtered)
             # Start filtering
-            filtering(filter_data, options_extraction["locations"]["eICU_pq"], options_filtering["locations"]["eICU_csv"],
-                      options_filtering["locations"]["eICU_pq"], options_execution["locations"]["eICU"])
+            filtering(filter_data, options_extraction["locations"]["eICU_pq"], location_filtered_csv,
+                      location_filtered_parquet, options_execution["locations"]["eICU"])
         if options_used_datasets["MIMICIV"] == 1:
             filter_data = MIMICIVFilter(options)
-
+            location_filtered_csv, location_filtered_parquet = determine_filtername("MIMICIV", path_to_filtered)
             # Start filtering
             filtering(filter_data, options_extraction["locations"]["MIMICIV_pq"],
-                      options_filtering["locations"]["MIMICIV_csv"], options_filtering["locations"]["MIMICIV_pq"],
+                      location_filtered_csv, location_filtered_parquet,
                       options_execution["locations"]["MIMICIV"])
 
     # Check if feature selection flag is active and start feature selection
@@ -258,7 +279,7 @@ if __name__ == "__main__":
     if active_phases["cross_validation"] == 1:
         if options_learning["algorithm"] == "sk":
             learner = SKLearner(options)
-            learner.cross_validate_forest()
+            learner._cross_validate_forest()
         else:
             print("Unknown learning library")
 
@@ -266,7 +287,7 @@ if __name__ == "__main__":
     if active_phases["learning"] == 1:
         if options_learning["algorithm"] == "sk":
             learner = SKLearner(options)
-            learner.learn()
+            learner._learn()
         else:
             print("Unknown learning library")
 
