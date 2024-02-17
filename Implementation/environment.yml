@@ -1,0 +1,14 @@
+name: ardsrf
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10.4 
+  - conda-forge::cogapp=3.3.0
+  - conda-forge::mysql-connector-python=8.0.29
+  - sshtunnel=0.4.0
+  - pandas=1.4.2
+  - numpy
+  - scikit-learn=1.1.2
+  - matplotlib
+  - pyarrow=8.0.0

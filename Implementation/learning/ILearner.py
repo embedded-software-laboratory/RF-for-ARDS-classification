@@ -131,9 +131,9 @@ class ILearner:
     def _read_test_data(self) -> pd.DataFrame:
         return self._read_data(self.learning_locations["test_set_location"]+".parquet")
     
-    def learn() :
+    def _learn(self):
         pass
 
-    def evaluate() :
+    def evaluate(self):
         pass
         

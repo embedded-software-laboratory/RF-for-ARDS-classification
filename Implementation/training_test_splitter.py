@@ -107,7 +107,7 @@ if __name__ == '__main__' :
     for db in databases:
        
         for f in filters:
-            file = "./" + db +  ".parquet"
+            file = "../Data/Extracted_Data/" + db + "_data.parquet"
             data = pd.read_parquet(file, engine='auto')
             
             

@@ -782,7 +782,7 @@ class eICUPreprocessor(IPreprocessor):
             data['drugrate'] = data['drugrate']/weight
         return data
 
-    def _convert_from_mg_kg_min_to_mcg_kg_min(self, data: pd.DataFrame) -> pd.DataFrame:
+    def _convert_from_mg_kg_min_to_mcg_kg_min(self, data: pd.DataFrame, weight) -> pd.DataFrame:
         data['drugrate'] = data['drugrate'] * 1000
         return data
 

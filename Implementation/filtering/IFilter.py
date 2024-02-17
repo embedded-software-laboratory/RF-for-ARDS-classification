@@ -104,7 +104,9 @@ class IFilter:
    
     def _delete_admissions(self, data: pd.DataFrame, to_delete: list) -> pd.DataFrame:
         """Function that is used to filter out admission and discard them"""
-        
+
+        if not to_delete:
+            return data
         to_delete_set = set(to_delete)
         data = data.drop(to_delete_set)
         data.reset_index(inplace= True)

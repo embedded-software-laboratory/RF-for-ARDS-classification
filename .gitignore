@@ -315,7 +315,9 @@ TSWLatexianTemp*
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bi
 06_Implementierung/Implementation/options.json
-*.json
 *.pdf
-Data/Models/*
+*.parquet
+*.csv
+*.ini
 venv_*/*
+*/Runscripts/*
