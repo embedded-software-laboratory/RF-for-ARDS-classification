@@ -10,6 +10,7 @@ class ILearner:
         self.learning_options = options["learning"]
         self.learning_params = self.learning_options["parameters"]["general"]
         self.learning_locations = self.learning_options["locations"]
+        random.seed(3008)
         return
     
     
