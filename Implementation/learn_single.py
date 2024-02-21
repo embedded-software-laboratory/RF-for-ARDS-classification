@@ -7,6 +7,8 @@ import pandas as pd
 import json
 import argparse
 from learning.sk_Learner import SKLearner
+from utils import Metrics
+
 
 def read_options(location):
     with open(location, "r") as file:
@@ -74,9 +76,11 @@ if __name__ == "__main__":
                 location_features = "../Data/Validation/Settings/" + name_model + revision + "_features.csv"
                 location_metrics = "../Data/Validation/Metrics/"
                 name_metrics = name_model + revision
+                model_path = "../Data/Results/" + name_model + "_Version_" + revision + ".pkl"
                 print(name_model)
                 learner = SKLearner(options_general)
-                learner.learn_modular(rf, fs_predictors, labels, "Testing", location_metrics, name_metrics)
+                metrics = Metrics("Testing", location_metrics, name_metrics)
+                learner.learn_modular(rf, fs_predictors, labels, metrics, model_path=model_path)
 
                 selected_features = fs_predictors.columns.to_series()
                 selected_features.to_csv(location_features, sep=",", index=False)
