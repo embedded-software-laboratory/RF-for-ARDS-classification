@@ -6,7 +6,11 @@ from sklearn.feature_selection import  mutual_info_classif, SelectFromModel, Sel
 from sklearn.metrics import accuracy_score, auc, confusion_matrix, f1_score, matthews_corrcoef, roc_curve, make_scorer
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
+from learning.sk_Learner import  SKLearner
 import json
+
+from utils import Metrics
+
 
 def read_options(location):
     with open(location, "r") as file:
@@ -61,62 +65,91 @@ def evaluate(random_forest, predictors, labels, metrics_path) :
         return 
 
 if __name__ == "__main__":
-    best_models = ["uka_data_extreme", "eICU", "MIMICIV-AC-RF"]
+    best_models = ["uka_data_extreme_", "eICU", "MIMICIV-AC-RF"]
     datasets = ["uka_data_extreme", "eICU_data_extreme", "MIMICIV_data_extreme"]
+    options_general = read_options("./options.json")
     
-    for model in datasets:
-        location_config = "../Data/Models/Save/" + model + ".json"
+    for model_name in datasets:
+        location_config = "../Data/Models/" + model_name + "_standard.json"
         location_testing = []
-        location_Metrics = []
+        path_metrics = "../Data/Results/"
+        name_metrics = []
+        dataset_name = []
         options = read_options(location_config)
         rf = RandomForestClassifier(
-                                n_estimators = options["n_estimators"], min_samples_split = options["min_samples_split"], min_samples_leaf = options["min_samples_leaf"], 
-                                max_features = "sqrt", max_depth = options["max_depth"], bootstrap = options["bootstrap"]
+                n_estimators=options["n_estimators"],
+                criterion=options["criterion"],
+                max_depth=options["max_depth"],
+                min_samples_split=options["min_samples_split"],
+                min_samples_leaf=options["min_samples_leaf"],
+                min_weight_fraction_leaf=options["min_weight_fraction_leaf"],
+                max_features=options["max_features"],
+                max_leaf_nodes=options["max_leaf_nodes"],
+                min_impurity_decrease=options["min_impurity_decrease"],
+                bootstrap=options["bootstrap"],
+                oob_score=options["oob_score"],
+                n_jobs=-1,
+                random_state=3308,
+                verbose=options["verbose"],
+                warm_start=options["warm_start"],
+                class_weight=options["class_weight"],
+                ccp_alpha=options["ccp_alpha"],
+                max_samples=options["max_samples"]
                             )
-        if "uka" in model:
+        if "uka" in model_name:
             location_training = "../Data/Training_Data/uka_data_extreme.parquet"
             location_testing.append("../Data/Test_Data/eICU_data_extreme.parquet")
             location_testing.append("../Data/Test_Data/uka_data_extreme.parquet")
             location_testing.append("../Data/Test_Data/MIMICIV_data_extreme.parquet")
-            location_Metrics.append("../Data/Results/uka_eICU.json")
-            location_Metrics.append("../Data/Results/uka_uka.json")
-            location_Metrics.append("../Data/Results/uka_MIMICIV.json")
+            name_metrics.append("uka_eICU")
+            name_metrics.append("uka_uka")
+            name_metrics.append("uka_MIMICIV")
+            model_path = "../Data/Models/uka_generalisation.pkl"
 
 
-        elif "eICU" in model :
+        elif "eICU" in model_name :
             location_training = "../Data/Training_Data/eICU_data_extreme.parquet"
             location_testing.append("../Data/Test_Data/eICU_data_extreme.parquet")
             location_testing.append("../Data/Test_Data/uka_data_extreme.parquet")
             location_testing.append("../Data/Test_Data/MIMICIV_data_extreme.parquet")
-            location_Metrics.append("../Data/Results/eICU_eICU.json")
-            location_Metrics.append("../Data/Results/eICU_uka.json")
-            location_Metrics.append("../Data/Results/eICU_MIMICIV.json")
-        elif "MIMICIV" in model :
+            name_metrics.append("eICU_eICU")
+            name_metrics.append("eICU_uka")
+            name_metrics.append("eICU_MIMICIV")
+            model_path = "../Data/Models/eICU_generalisation.pkl"
+        elif "MIMICIV" in model_name :
             location_training = "../Data/Training_Data/MIMICIV_data_extreme.parquet"
             location_testing.append("../Data/Test_Data/eICU_data_extreme.parquet")
             location_testing.append("../Data/Test_Data/uka_data_extreme.parquet")
             location_testing.append("../Data/Test_Data/MIMICIV_data_extreme.parquet")
-            location_Metrics.append("../Data/Results/MIMICIV_eICU.json")
-            location_Metrics.append("../Data/Results/MIMICIV_uka.json")
-            location_Metrics.append("../Data/Results/MIMICIV_MIMICIV.json")
+            name_metrics.append("MIMICIV_eICU")
+            name_metrics.append("MIMICIV_uka")
+            name_metrics.append("MIMICIV_MIMICIV")
+            model_path = "../Data/Models/MIMICIV_generalisation.pkl"
         data = pd.read_parquet(location_training, engine='auto')
         data = data.reset_index()
         del data['index']
-        labels = data["ARDS"]
+        labels_learn = data["ARDS"]
         predictors = data.loc[:, data.columns != 'ARDS']
         clf = RandomForestClassifier(
                                 n_estimators = options["n_estimators"], min_samples_split = options["min_samples_split"], min_samples_leaf = options["min_samples_leaf"], max_features = "sqrt", max_depth = options["max_depth"], bootstrap = options["bootstrap"]
                             )
-        clf = clf.fit(predictors, labels)
+        clf = clf.fit(predictors, labels_learn)
         model = SelectFromModel(clf, prefit=True)
         cols = model.get_support(indices=True)
         fs_predictors = predictors.iloc[:, cols]
-        rf = rf.fit(fs_predictors, labels)
+        learner = SKLearner(options_general)
+
+
         print("After learning")
         for index in range(len(location_testing)):
-            predictors, labels = _read_data(location_testing[index])
-            predictors = predictors.iloc[:,cols]
-            evaluate(rf, predictors, labels, location_Metrics[index])
+            print(name_metrics)
+            print(location_testing[index])
+            metrics = Metrics(dataset_name=model_name, metrics_location=path_metrics, metrics_name=name_metrics[index])
+            learner.learn_modular(rf=rf, predictors=fs_predictors, label=labels_learn, metrics=metrics, model_path=model_path)
+            predictors_train, labels_train = _read_data(location_testing[index])
+            predictors_train = predictors_train.iloc[:,cols]
+            learner.evaluate_modular(random_forest=rf, predictors=predictors_train, labels=labels_train, metrics_full=metrics)
+
 
 
             

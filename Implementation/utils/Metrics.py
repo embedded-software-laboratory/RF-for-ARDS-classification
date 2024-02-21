@@ -339,13 +339,13 @@ class Metrics:
             if key in self._tprs_eval.keys():
                 used_threshold_calcs.append(key)
         for threshold_calc_name in used_threshold_calcs:
-            tprs = self._tprs_eval[threshold_calc_name].deepcopy()
+            tprs = self._tprs_eval[threshold_calc_name]
             del tprs["mean"]
             tprs_list = []
             for key, value in tprs.items():
                 tprs_list.append(value)
 
-            fprs = self._fprs_eval[threshold_calc_name].deepcopy()
+            fprs = self._fprs_eval[threshold_calc_name]
             del fprs["mean"]
             fprs_list = []
             for key, value in fprs.items():

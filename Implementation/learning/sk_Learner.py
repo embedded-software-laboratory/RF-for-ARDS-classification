@@ -47,13 +47,11 @@ class SKLearner(ILearner):
             optimal_threshold = 0.5
         return optimal_threshold
 
-    def learn_modular(self, rf: RandomForestClassifier, predictors, label, dataset_name, metrics_location,
-                      metrics_name):
+    def learn_modular(self, rf: RandomForestClassifier, predictors, label, metrics: Metrics, model_path):
         # Learn and store resulting model
         print("In learn")
         random_forest = rf.fit(predictors, label)
         fpr, tpr, thresholds, auc_score = self._compute_roc_auc(random_forest, predictors, label)
-        metrics = Metrics(dataset_name=dataset_name, metrics_location=metrics_location, metrics_name=metrics_name)
 
         for threshold_calc in threshold_calcs:
             optimal_threshold = self.find_best_proba(threshold_calc, tpr, fpr, thresholds)
@@ -64,7 +62,7 @@ class SKLearner(ILearner):
                             GenericMetric(calc_name, "auc_scores_train", "training", auc_score),
                             GenericMetric(calc_name, "optimal_probability", "training", optimal_threshold)]
             metrics.update_metrics(metrics_list)
-        self._store_model(random_forest, metrics)
+        self._store_model(random_forest, metrics, model_path=model_path)
 
     def _learn(self):
         """Function that starts the learning process of the RF and stores the resulting model after completion"""
@@ -75,8 +73,9 @@ class SKLearner(ILearner):
         dataset_name = self._determine_dataset()
         metrics_location = "../Data/Models/" + self.learning_params_general["model_name"] + "_metrics_train.json"
         metrics_name = self.learning_params_general["model_name"] + "_metrics_train"
-
-        self.learn_modular(random_forest, predictors, label, dataset_name, metrics_location, metrics_name)
+        metrics = Metrics(dataset_name, metrics_location, metrics_name)
+        model_path = "../Data/Models/" + self.learning_params_general["model_name"] + ".pkl"
+        self.learn_modular(random_forest, predictors, label, metrics, model_path)
 
         return
 
@@ -186,17 +185,9 @@ class SKLearner(ILearner):
 
         overall_metrics.save_metrics()
 
-    def evaluate(self):
-        """Function used to evalute a RF model"""
-
-        # Load model and test data
-        print("Evaluating")
-        random_forest, optimal_thresholds, metrics_full = self._load_model()
-        predictors, labels = self._read_test_data()
-        metrics_path = "../Data/Results/" + self.learning_params_general["model_name"] + ".json"
-
+    def evaluate_modular(self, random_forest, predictors, labels, metrics_full: Metrics):
         # Compute evaluation results
-
+        optimal_thresholds = metrics_full.optimal_probabilities
         fpr, tpr, thresholds, auc_score = self._compute_roc_auc(random_forest, predictors, labels)
         for calc_name, _ in optimal_thresholds.items():
             threshold = optimal_thresholds[calc_name]["training"]
@@ -214,6 +205,20 @@ class SKLearner(ILearner):
             ]
             metrics_full.update_metrics(metrics_list)
         metrics_full.save_metrics()
+
+    def evaluate(self):
+        """Function used to evalute a RF model"""
+
+        # Load model and test data
+        print("Evaluating")
+        model_path = "../Data/Models/" + self.learning_params_general["model_name"]
+        metrics_location = "../Data/Models/"
+        metrics_name = self.learning_params_general["model_name"] + "_metrics_train"
+        dataset_name = self._determine_dataset()
+        random_forest, optimal_thresholds, metrics_full = self._load_model(model_path, metrics_location, metrics_name,
+                                                                           dataset_name)
+        predictors, labels = self._read_test_data()
+        self.evaluate_modular(random_forest, optimal_thresholds, predictors, metrics_full)
 
         return
 
@@ -411,7 +416,7 @@ class SKLearner(ILearner):
                 warm_start=location_rf_options["warm_start"],
                 class_weight=location_rf_options["class_weight"],
                 ccp_alpha=location_rf_options["ccp_alpha"],
-                max_samples=location_rf_options["max_samples"],
+                max_samples=location_rf_options["max_samples"]
             )
             # Find best hyperparmeters in grid
             rf_random = rf_random.fit(training_predictors, training_labels)
@@ -447,18 +452,16 @@ class SKLearner(ILearner):
         return mcc
 
     # Functions for loading and storing RF models
-    def _store_model(self, random_forest, metrics_training: Metrics):
-        model_path = "../Data/Models/" + self.learning_params_general["model_name"]
+    def _store_model(self, random_forest, metrics_training: Metrics, model_path):
+
 
         file = open(model_path, "wb")
         pickle.dump(random_forest, file)
         file.close()
         metrics_training.save_metrics()
 
-    def _load_model(self):
-        model_path = "../Data/Models/" + self.learning_params_general["model_name"]
-        metrics_location = "../Data/Models/"
-        metrics_name = self.learning_params_general["model_name"] + "_metrics_train"
+    def _load_model(self, model_path, metrics_location, metrics_name, dataset_name):
+
         metrics_path = metrics_location + metrics_name + ".json"
         file = open(model_path, "rb")
         random_forest = pickle.load(file)
@@ -467,8 +470,7 @@ class SKLearner(ILearner):
         metrics_training_json = json.load(file)
         file.close()
 
-        dataset_name = self._determine_dataset()
-        metrics_training = Metrics(dataset_name, metrics_location, metrics_training_json)
+        metrics_training = Metrics(dataset_name, metrics_location, metrics_name)
         metrics_training.fprs_train = metrics_training_json["fprs_train"]
         metrics_training.tprs_train = metrics_training_json["tprs_train"]
         metrics_training.auc_scores_training = metrics_training_json["auc_scores_train"]
