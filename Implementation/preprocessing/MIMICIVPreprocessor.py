@@ -347,6 +347,8 @@ class MIMICIVPreprocessor(IPreprocessor):
             data_frames = [df_PEEP, df_paO2, df_fiO2]
             time_table = reduce(lambda left, right: pd.merge(left, right, on=['abstime', 'charttime'], how='outer'),
                                 data_frames)
+            time_table.sort_values(by="abstime", inplace=True)
+            time_table.reset_index(drop=True, inplace=True)
 
             # Calculate Horowitz where PEEP is at least 5
             patient_horowitz_value_list = []
