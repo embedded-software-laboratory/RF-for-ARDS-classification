@@ -523,7 +523,7 @@ class MIMICIVExtractor(IExtractor):
         
         patient_list = []
         patient_list_freq = []
-        print(admission_times.to_string())
+
        
         for admission in admissions :
             admission_id = admission[ADMISSION_ID][0]
@@ -637,7 +637,8 @@ class MIMICIVExtractor(IExtractor):
 
             # Create timetable for whole window
             times = [float(i) for i in np.arange(time_window_start, (time_window_end+1), 1.0)]
-            print(len(times))
+
+            print("Admission_ID: " + str(admission_id))
 
             # Process extracted data
             data, freq = self.preprocessor.process_data_new(list_lab_df, list_chart_df, list_input_df, list_procedures_df, patient_ventilation,  patient_horowitz, patient_vol_input, patient_vol_output, admission, times, min_horowitz_times_minutes)
