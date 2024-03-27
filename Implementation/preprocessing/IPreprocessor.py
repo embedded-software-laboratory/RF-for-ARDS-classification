@@ -357,11 +357,9 @@ class IPreprocessor:
     def _check_ventilated(self, admission, paO2_time, fio2time):
         # Only use data where patient is ventilated
         check_ventilated = False
-
         for i in range(len(admission[MECHVENTSTART])):
             start_time = admission[MECHVENTSTART][i]
             end_time = admission[MECHVENTEND][i]
-
             if start_time <= paO2_time <= end_time and start_time <= fio2time <= end_time:
                 check_ventilated = True
                 break

@@ -360,7 +360,7 @@ class MIMICIVPreprocessor(IPreprocessor):
                 
                 if not math.isnan(row['paO2_(ohne_Temp-Korrektur)']):
                     # Search for next fiO2 recorded before the paO2 value
-                    for i in range(index, -1, -1):
+                    for i in range(index, 0, -1):
                         if not math.isnan(time_table['fiO2'].at[i]) and not time_table['fiO2'].at[i] == 0:
                             
                             # Ensure a patient is ventilated because over wiese horovitz makes no sense
@@ -369,7 +369,7 @@ class MIMICIVPreprocessor(IPreprocessor):
 
                             # Check if PEEP for found timestamp is higher than 5cm H20
                             if not self._check_PEEP(row, time_table, patient_horowitz_value_list,
-                                                    patient_horowitz_abs_time_list, patient_horowitz_charttime_list, index):
+                                                    patient_horowitz_abs_time_list, patient_horowitz_charttime_list, i):
                                 break
 
             # Check if atleast one horovitz value is present
@@ -424,7 +424,7 @@ class MIMICIVPreprocessor(IPreprocessor):
                     patient_horowitz_abs_time_list: list, patient_horowitz_charttime_list: list, index: int):
         """Function that checks if the PEEP next to Choosen Fio2 and paO2 is atleast 5cmH20"""
         # Check if PEEP nearest to fiO2 is > 5
-        for j in range(index, -1, -1):
+        for j in range(index, 0, -1):
             if not math.isnan(time_table['PEEP'].at[j]) and time_table['PEEP'].at[j] < 5:
                 return False
             elif not math.isnan(time_table['PEEP'].at[j]):
